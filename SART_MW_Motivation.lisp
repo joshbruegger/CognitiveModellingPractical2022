@@ -238,6 +238,8 @@
   :rt -5 ; retrieval threshold
   :bll 0.5 ; base-level learning
   :ans 0.2 ;activation noise
+  :epl t ; enable prouction-compilation
+  :pct t ; production compilation trace
 )
 
 (chunk-type beginning label)
@@ -250,7 +252,6 @@
   (start isa chunk)
   (press-on-O isa srmapping stimulus "O" hand left)
   (withhold-on-Q isa srmapping stimulus "Q" hand nil)
-  ;; (startgoal isa beginning label start)
   (attend isa goal state attend)
   (wander isa goal state wander)
   (identify isa subgoal step identify)
@@ -289,8 +290,6 @@
 )
 
 (set-base-levels
-  ;; (attend      10000  -10000)
-  ;; (wander      10000  -10000)
   (press-on-O    10000  -10000)
   (withhold-on-Q  10000  -10000)
 
