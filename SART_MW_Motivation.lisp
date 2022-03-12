@@ -190,6 +190,42 @@
 
 (clear-all)
 
+;; Custom reward only for attend
+(defun give-reward (reward)
+  (let ((newReward (+ reward (car (car (spp attend :u)))))
+        (command "(spp attend :u ")
+  )
+
+  (setq command (concatenate 'string command (format nil "~A" newReward)))
+  (setq command (concatenate 'string command ")"))
+  (eval (read-from-string command))
+
+  (format nil "REWARD GIVEN: ~a" reward)
+  (spp attend :u)
+  
+  )
+)
+
+(defvar matchingReward)
+(setq matchingReward 0.1)
+
+(defvar trialEndReward)
+(setq trialEndReward -0.1)
+
+(defvar checkGoalReward)
+(setq checkGoalReward -0.1)
+
+(defvar snapBackRewardValue)
+(setq snapBackRewardValue 2)
+
+(defvar decreasingFactor)
+(setq decreasingFactor 0.1)
+
+(defun snapBackReward ()
+  (setq snapBackRewardValue (- snapBackRewardValue decreasingFactor))
+  snapBackRewardValue
+)
+
 (define-model sart
 
 ;; Model parameters
@@ -214,7 +250,7 @@
   (start isa chunk)
   (press-on-O isa srmapping stimulus "O" hand left)
   (withhold-on-Q isa srmapping stimulus "Q" hand nil)
-  (startgoal isa beginning label start)
+  ;; (startgoal isa beginning label start)
   (attend isa goal state attend)
   (wander isa goal state wander)
   (identify isa subgoal step identify)
@@ -243,18 +279,18 @@
   (memory19 isa memory content "never gonna give you up")
   (memory20 isa memory content "I want pizza")
   (memory21 isa memory content "Simon the cat video")
-  (memory22 isa memory content "Chocolate")
+  (memory22 isa memory content "Stephen Jones' brilliant accent")
   (memory23 isa memory content "Can you breathe on mars")
   (memory24 isa memory content "Cognitive modelling practical assignment")
-  (memory25 isa memory content "future final")
-  (memory26 isa memory content "if im 70kg and I eat 10kg of pizza, am I 15% pizza")
+  (memory25 isa memory content "TAs you're great pls give us good grade")
+  (memory26 isa memory content "if im 70kg and I eat 10kg of pizza, am I 8% pizza")
   (memory27 isa memory content "what will I have for diner?")
-  (remember-to-attend isa memory content "remember to attend")
+  (remember-to-attend isa memory content "I should attend")
 )
 
 (set-base-levels
-  (attend      10000  -10000)
-  (wander      10000  -10000)
+  ;; (attend      10000  -10000)
+  ;; (wander      10000  -10000)
   (press-on-O    10000  -10000)
   (withhold-on-Q  10000  -10000)
 
@@ -274,48 +310,50 @@
   (memory26 200 -10000) (memory27 200 -10000)
 )
 
-(p start-task
-  "Performs a retrieval request to set the goal "
-  =goal>
-    isa      beginning
-    label    start
-  ?retrieval>
-    buffer   empty
-    state    free
-  - state    error
+(p attend
+  ?goal>
+    buffer    empty
+==>
+  +goal>
+    isa       goal
+    state     attend
+)
+(spp attend :u 5)
+
+(p wander
+  ?goal>
+    buffer              empty
 ==>
   +retrieval>
-    isa      goal
-    state    attend
-  -goal>
+    isa                 memory
+  - content             nil
+  - content             "I should attend"
+    :recently-retrieved nil
+  -imaginal>
+  +goal>
+    isa                 goal
+    state               wander
 )
+(spp wander :u 1)
 
 (p check-current-goal
-  =retrieval>
+  =goal>
     isa           goal
     state         attend
-  ?retrieval>
-    state         free
-  - state         error
-  ?goal>
+  ?visual-location>
     buffer        empty
   ?visual>
   - scene-change  T
 ==>
-  =retrieval>
-    state         nil ; clear retrieval buffer without strengthening chunk
-  -retrieval>
-  +retrieval>
-    isa           goal
-  - state         nil
+  -goal>
+  !output! "NEGATIVE REWARD GIVEN: -0.1"
+  !eval! (give-reward checkGoalReward)
 )
 
 (p identify-stimulus
-  ?goal>
-    buffer      empty
-  =retrieval>
-    isa         goal
-    state       attend
+  =goal>
+    isa       goal
+    state     attend
   =visual-location>
   ?visual>
     state       free
@@ -326,9 +364,6 @@
   +goal>
     isa         subgoal
     step        get-response
-  =retrieval>
-    state       nil ; clear retrieval buffer without strengthening chunk
-  -retrieval>
 )
 
 (p retrieve-response
@@ -351,6 +386,7 @@
     step      make-response
   +visual>
     isa       clear-scene-change
+  !eval! (give-reward matchingReward)
 )
 
 (p respond-if-O
@@ -374,6 +410,7 @@
   +retrieval>
     isa       goal
   - state     nil
+  !eval! (give-reward trialEndReward)  
 )
 
 (p dont-respond-if-Q
@@ -393,27 +430,11 @@
   +retrieval>
     isa       goal
   - state     nil
+  !eval! (give-reward trialEndReward)
+  
 )
 
-(p start-wandering
-  ?goal>
-    buffer              empty
-  =retrieval>
-    isa                 goal
-    state               wander
-==>
-  =retrieval>
-    state       nil ; clear retrieval buffer without strengthening chunk
-  +retrieval>
-    isa                 memory
-  - content             nil
-  - content             "I should attend"
-    :recently-retrieved nil
-  -imaginal>
-  +goal>
-    isa                 goal
-    state               wander
-)
+
 
 (p retrieve-memory
   =goal>
@@ -480,8 +501,7 @@
     state               attend
   -goal>
   -imaginal>
+  !eval! (give-reward (snapBackReward))
 )
-
-(goal-focus startgoal)
 
 )
