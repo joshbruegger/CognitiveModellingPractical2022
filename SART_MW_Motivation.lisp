@@ -190,6 +190,21 @@
 
 (clear-all)
 
+(defvar matchingReward)
+(setq matchingReward 0.2)
+
+(defvar trialEndReward)
+(setq trialEndReward -0.2)
+
+(defvar checkGoalReward)
+(setq checkGoalReward -0.0005)
+
+(defvar snapBackRewardValue)
+(setq snapBackRewardValue 4)
+
+(defvar decreasingFactor)
+(setq decreasingFactor 0.5)
+
 ;; Custom reward only for attend
 (defun give-reward (reward)
   (let ((newReward (+ reward (car (car (spp attend :u)))))
@@ -200,31 +215,43 @@
   (setq command (concatenate 'string command ")"))
   (eval (read-from-string command))
 
-  (format nil "REWARD GIVEN: ~a" reward)
-  (spp attend :u)
+  (format t "REWARD GIVEN: ~a, NEW UTILITY: ~a" reward (car(car(spp attend :u))))
   
   )
 )
 
-(defvar matchingReward)
-(setq matchingReward 0.1)
-
-(defvar trialEndReward)
-(setq trialEndReward -0.1)
-
-(defvar checkGoalReward)
-(setq checkGoalReward -0.1)
-
-(defvar snapBackRewardValue)
-(setq snapBackRewardValue 2)
-
-(defvar decreasingFactor)
-(setq decreasingFactor 0.1)
-
 (defun snapBackReward ()
   (setq snapBackRewardValue (- snapBackRewardValue decreasingFactor))
-  snapBackRewardValue
+  (cond ((< snapBackRewardValue 0.5)
+   0)
+   (t snapBackRewardValue))
 )
+
+(defun reward-hook-fun (id)
+
+  (cond ( (string-equal (evt-details id) "PRODUCTION-FIRED CHECK-CURRENT-GOAL")
+          (format t "GIVING REWARD FOR CHECK-CURRENT-GOAL~%")
+          (give-reward checkGoalReward)
+        )
+        ( (string-equal (evt-details id) "PRODUCTION-FIRED RETRIEVE-RESPONSE")
+          (format t "GIVING REWARD FOR RETRIEVE-RESPONSE~%")
+          (give-reward matchingReward)
+        )
+        ( (string-equal (evt-details id) "PRODUCTION-FIRED PREPARE-FOR-NEXT")
+          (format t "GIVING REWARD FOR PREPARE-FOR-NEXT~%")
+          (give-reward trialEndReward) 
+        )
+        ( (string-equal (evt-details id) "PRODUCTION-FIRED REMEMBER-TO-ATTEND")
+          (format t "GIVING REWARD FOR REMEMBER-T0-ATTEND~%")
+          (give-reward (snapBackReward))
+        )
+        ( (string-equal (evt-details id) "PRODUCTION-FIRED RETRIEVE-MEMORY")
+          (format t "MIND WANDERING! UTILITY: ~a" (car(car(spp attend :u))))
+        )
+  ) 
+)
+
+(add-post-event-hook 'reward-hook-fun)
 
 (define-model sart
 
@@ -240,6 +267,9 @@
   :ans 0.2 ;activation noise
   :epl t ; enable prouction-compilation
   :pct t ; production compilation trace
+  :ul t ; Utility learning required for production comp
+  :ult t; utility learning trace flag
+  :egs 0.01 ; Utiliy noise
 )
 
 (chunk-type beginning label)
@@ -257,6 +287,8 @@
   (identify isa subgoal step identify)
   (get-response isa subgoal step get-response)
   (make-response isa subgoal step make-response)
+  (prepare-for-next isa subgoal step prepare-for-next)
+  
 
   ;; Memories
   (memory1 isa memory content "cute cat")
@@ -286,6 +318,42 @@
   (memory25 isa memory content "TAs you're great pls give us good grade")
   (memory26 isa memory content "if im 70kg and I eat 10kg of pizza, am I 8% pizza")
   (memory27 isa memory content "what will I have for diner?")
+  (memory28 isa memory content "what will I have for diner?")
+  (memory29 isa memory content "what will I have for diner?")
+  (memory30 isa memory content "what will I have for diner?")
+  (memory31 isa memory content "what will I have for diner?")
+  (memory32 isa memory content "what will I have for diner?")
+  (memory33 isa memory content "what will I have for diner?")
+  (memory34 isa memory content "what will I have for diner?")
+  (memory35 isa memory content "what will I have for diner?")
+  (memory36 isa memory content "what will I have for diner?")
+  (memory37 isa memory content "what will I have for diner?")
+  (memory38 isa memory content "what will I have for diner?")
+  (memory39 isa memory content "what will I have for diner?")
+  (memory40 isa memory content "what will I have for diner?")
+  (memory41 isa memory content "what will I have for diner?")
+  (memory42 isa memory content "what will I have for diner?")
+  (memory43 isa memory content "what will I have for diner?")
+  (memory44 isa memory content "what will I have for diner?")
+  (memory45 isa memory content "what will I have for diner?")
+  (memory46 isa memory content "what will I have for diner?")
+  (memory47 isa memory content "what will I have for diner?")
+  (memory48 isa memory content "what will I have for diner?")
+  (memory49 isa memory content "what will I have for diner?")
+  (memory50 isa memory content "what will I have for diner?")
+  (memory51 isa memory content "what will I have for diner?")
+  (memory52 isa memory content "what will I have for diner?")
+  (memory53 isa memory content "what will I have for diner?")
+  (memory54 isa memory content "what will I have for diner?")
+  (memory55 isa memory content "what will I have for diner?")
+  (memory56 isa memory content "what will I have for diner?")
+  (memory57 isa memory content "what will I have for diner?")
+  (memory58 isa memory content "what will I have for diner?")
+  (memory59 isa memory content "what will I have for diner?")
+  (memory60 isa memory content "what will I have for diner?")
+  (memory61 isa memory content "what will I have for diner?")
+
+
   (remember-to-attend isa memory content "I should attend")
 )
 
@@ -298,15 +366,37 @@
   (memory4  200 -10000) (memory5  200 -10000)
   (memory6  200 -10000) (memory7  200 -10000)
   (memory8  200 -10000) (memory9  200 -10000)
+
   (memory10 200 -10000) (memory11 200 -10000)
   (memory12 200 -10000) (memory13 200 -10000)
   (memory14 200 -10000) (memory15 200 -10000)
   (memory16 200 -10000) (memory17 200 -10000)
   (memory18 200 -10000) (memory19 200 -10000)
+
   (memory20 200 -10000) (memory21 200 -10000)
   (memory22 200 -10000) (memory23 200 -10000)
   (memory24 200 -10000) (memory25 200 -10000)
   (memory26 200 -10000) (memory27 200 -10000)
+  (memory28 200 -10000) (memory29 200 -10000)
+
+  (memory30 200 -10000) (memory31 200 -10000)
+  (memory32 200 -10000) (memory33 200 -10000)
+  (memory34 200 -10000) (memory35 200 -10000)
+  (memory36 200 -10000) (memory37 200 -10000)
+  (memory38 200 -10000) (memory39 200 -10000)
+
+  (memory40 200 -10000) (memory41 200 -10000)
+  (memory42 200 -10000) (memory43 200 -10000)
+  (memory44 200 -10000) (memory45 200 -10000)
+  (memory46 200 -10000) (memory47 200 -10000)
+  (memory48 200 -10000) (memory49 200 -10000)
+
+  (memory50 200 -10000) (memory51 200 -10000)
+  (memory52 200 -10000) (memory53 200 -10000)
+  (memory54 200 -10000) (memory55 200 -10000)
+  (memory56 200 -10000) (memory57 200 -10000)
+  (memory58 200 -10000) (memory59 200 -10000)
+  (memory60 200 -10000) (memory61 200 -10000)
 )
 
 (p attend
@@ -333,7 +423,7 @@
     isa                 goal
     state               wander
 )
-(spp wander :u 1)
+(spp wander :u 0)
 
 (p check-current-goal
   =goal>
@@ -345,8 +435,6 @@
   - scene-change  T
 ==>
   -goal>
-  !output! "NEGATIVE REWARD GIVEN: -0.1"
-  !eval! (give-reward checkGoalReward)
 )
 
 (p identify-stimulus
@@ -374,8 +462,8 @@
     value     =letter
   ?visual>
     state     free
-  ?retrieval>
-    state     free
+  ;; ?retrieval>
+  ;;   state     free
 ==>
   +retrieval>
     isa       srmapping
@@ -385,8 +473,8 @@
     step      make-response
   +visual>
     isa       clear-scene-change
-  !eval! (give-reward matchingReward)
 )
+(spp retrieve-response :u 0.2)
 
 (p respond-if-O
   =goal>
@@ -394,7 +482,7 @@
     step      make-response
   =retrieval>
     isa       srmapping
-  - stimulus  nil
+  ;; - stimulus  nil
     hand      =hand
   ?manual>
     state     free
@@ -403,13 +491,10 @@
     isa       punch
     hand      =hand
     finger    index
-  -goal>
-  -visual-location>
-  -visual>
-  +retrieval>
-    isa       goal
-  - state     nil
-  !eval! (give-reward trialEndReward)  
+  =goal>
+    isa       subgoal
+    step      prepare-for-next
+
 )
 
 (p dont-respond-if-Q
@@ -419,21 +504,26 @@
   =retrieval>
     isa       srmapping
     hand      nil
-  - stimulus  nil
+  ;;- stimulus  nil
   ?manual>
     state     free
+==>
+  =goal>
+    isa       subgoal
+    step      prepare-for-next
+)
+
+(p prepare-for-next
+  =goal>
+    isa       subgoal
+    step      prepare-for-next
 ==>
   -goal>
   -visual-location>
   -visual>
-  +retrieval>
-    isa       goal
-  - state     nil
-  !eval! (give-reward trialEndReward)
-  
 )
 
-
+(spp prepare-for-next :reward t)
 
 (p retrieve-memory
   =goal>
@@ -500,7 +590,6 @@
     state               attend
   -goal>
   -imaginal>
-  !eval! (give-reward (snapBackReward))
 )
 
 )
