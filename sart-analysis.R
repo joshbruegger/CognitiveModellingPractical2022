@@ -74,4 +74,8 @@ utility_time <- setNames(aggregate(utilities_attend$utility,
                         mean), c("Time", "Utility"))
 utility_time <- utility_time[-1, ]
 
-ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() + coord_cartesian(xlim = c(0, 500))
+ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
+coord_cartesian(xlim = c(0, 500)) +
+geom_hline(yintercept = 0, linetype = "dotted", col = "red") +
+geom_ribbon(aes(ymin = -0.1,
+      ymax = 0.1), colour = NA, fill = "red", alpha = 0.1)
