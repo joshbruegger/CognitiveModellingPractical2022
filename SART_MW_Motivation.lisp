@@ -270,7 +270,7 @@
   :epl t ; enable prouction-compilation
   :pct t ; production compilation trace
   :ul t ; Utility learning required for production comp
-  :ult t; utility learning trace flag
+  :ult t ; utility learning trace flag
   :egs 0.01 ; Utiliy noise
 )
 
