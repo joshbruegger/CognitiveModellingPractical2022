@@ -225,7 +225,7 @@
 (defun snapBackReward ()
   (setq snapBackRewardValue (- snapBackRewardValue decreasingFactor))
   (cond ((< snapBackRewardValue 0.5)
-   0)
+   0.5)
    (t snapBackRewardValue))
 )
 

@@ -69,6 +69,8 @@ for (i in seq_len(n)) {
 
 }
 
+# plot utility
+
 utility_time <- setNames(aggregate(utilities_attend$utility,
                         list(utilities_attend$time),
                         mean), c("Time", "Utility"))
@@ -79,3 +81,23 @@ coord_cartesian(xlim = c(0, 500)) +
 geom_hline(yintercept = 0, linetype = "dotted", col = "red") +
 geom_ribbon(aes(ymin = -0.1,
       ymax = 0.1), colour = NA, fill = "red", alpha = 0.1)
+
+
+# plot RT CV
+# TODO: Add error bars
+
+data_rt <- data.frame(type = c("data", "model"), rt = c(0.30348, 0.2924))
+ggplot(data_rt, aes(y = rt, x = type, fill = type, ylab = "RTCV")) +
+geom_bar(position = "dodge", stat = "identity") +
+ylab("RTCV") + legend.position("none")
+
+
+# plot SART errors
+# TODO: Add error bars
+
+data_errors <- data.frame(type = c("data", "model"),
+                          rt = c(1 - 4.2111 / 240, 0.944))
+
+ggplot(data_errors, aes(y = rt, x = type, fill = type, ylab = "RTCV")) +
+geom_bar(position = "dodge", stat = "identity") + ylab("SART Accuracy") +
+theme(legend.position = "none")
