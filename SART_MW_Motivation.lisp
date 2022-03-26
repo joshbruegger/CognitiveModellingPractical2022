@@ -477,7 +477,7 @@
 )
 (spp retrieve-response :u 0.2)
 
-(p respond-if-O
+(p respond-if-target
   =goal>
     isa       subgoal
     step      make-response
@@ -498,7 +498,7 @@
 
 )
 
-(p dont-respond-if-Q
+(p refrain-if-non-target
   =goal>
     isa       subgoal
     step      make-response
@@ -557,7 +557,7 @@
   -retrieval>
 )
 
-(p respond-standard
+(p respond-default
   =goal>
     state               wander
   =visual-location>
