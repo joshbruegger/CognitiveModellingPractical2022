@@ -16,10 +16,10 @@
 
 
 ;; Experiment settings
-(defvar *stimulus-duration* 2) ; number of seconds the stimulus is shown
-(defvar *inter-stimulus-interval* 0.5) ; number of seconds between trials
-(defvar *target-trials* 180) ; number of target trials
-(defvar *non-target-trials* 20) ; number of non-target trials
+(defvar *stimulus-duration* 0.3) ; number of seconds the stimulus is shown
+(defvar *inter-stimulus-interval* 0.9) ; number of seconds between trials
+(defvar *target-trials* 1600) ; number of target trials
+(defvar *non-target-trials* 200) ; number of non-target trials
 
 (defvar *output-directory* "~/output/") ; location where output files are stored
 (defvar *trace-to-file-only* nil) ; whether the model trace should only be saved to file and not appear in terminal
@@ -202,10 +202,10 @@
 (setq checkGoalReward -0.0005)
 
 (defvar snapBackRewardValue)
-(setq snapBackRewardValue 4)
+(setq snapBackRewardValue 29)
 
 (defvar decreasingFactor)
-(setq decreasingFactor 0.5)
+(setq decreasingFactor 5)
 
 ;; Custom reward only for attend
 (defun give-reward (reward)
@@ -217,7 +217,7 @@
   (setq command (concatenate 'string command ")"))
   (eval (read-from-string command))
 
-  (format t "REWARD GIVEN: ~a, NEW UTILITY: ~a" reward (car(car(spp attend :u))))
+  (format t "REWARD GIVEN: ~a, NEW UTILITY: ~a~%" reward (car(car(spp attend :u))))
   
   )
 )
@@ -408,7 +408,7 @@
     isa       goal
     state     attend
 )
-(spp attend :u 5)
+(spp attend :u 30)
 
 (p wander
   ?goal>
@@ -463,8 +463,6 @@
     value     =letter
   ?visual>
     state     free
-  ;; ?retrieval>
-  ;;   state     free
 ==>
   +retrieval>
     isa       srmapping
@@ -483,7 +481,6 @@
     step      make-response
   =retrieval>
     isa       srmapping
-  ;; - stimulus  nil
     hand      =hand
   ?manual>
     state     free
@@ -505,7 +502,6 @@
   =retrieval>
     isa       srmapping
     hand      nil
-  ;;- stimulus  nil
   ?manual>
     state     free
 ==>
@@ -537,7 +533,6 @@
     isa                 memory
   - content             nil
     :recently-retrieved nil
-  -imaginal>
 )
 
 (p attend-memory
@@ -553,7 +548,7 @@
     isa                 memory
     content             =memory
   =retrieval>
-    state               nil
+    content             nil
   -retrieval>
 )
 
@@ -573,7 +568,7 @@
     finger    index
   -visual-location>
 )
-(spp respond-standard :u 1)
+(spp respond-default :u 1)
 
 (p remember-to-attend
   =goal>
@@ -581,16 +576,15 @@
   =retrieval>
     isa                 memory
     content             "I should attend"
+  =imaginal>
   ==>
-  =retrieval>
-    state               attend
-    content             nil
+  ;; =retrieval>
+  ;;   content             nil
   -retrieval>
-  +retrieval>
-    isa                 goal
-    state               attend
-  -goal>
+  =imaginal>
+    content             nil
   -imaginal>
+  -goal>
 )
 
 )
