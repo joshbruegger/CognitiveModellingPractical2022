@@ -202,10 +202,10 @@
 (setq checkGoalReward -0.0005)
 
 (defvar snapBackRewardValue)
-(setq snapBackRewardValue 29)
+(setq snapBackRewardValue 40)
 
 (defvar decreasingFactor)
-(setq decreasingFactor 5)
+(setq decreasingFactor 6)
 
 ;; Custom reward only for attend
 (defun give-reward (reward)
@@ -408,7 +408,7 @@
     isa       goal
     state     attend
 )
-(spp attend :u 30)
+(spp attend :u 35)
 
 (p wander
   ?goal>
@@ -473,7 +473,7 @@
   +visual>
     isa       clear-scene-change
 )
-(spp retrieve-response :u 0.2)
+(spp retrieve-response :u 0.3)
 
 (p respond-if-target
   =goal>

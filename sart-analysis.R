@@ -60,18 +60,18 @@ for (i in seq_len(n)) {
     participant <- participant + 1L
     print(participant)
   }
-
+  
   # Update time
   new_time <- as.numeric(str_match(line, "  ([\\d.]+)   ")[2])
   if (!is.na(new_time)) {
     time <- new_time
     curr_block <- ceiling(time / time_per_block)
   }
-
-
+  
+  
   matched_memory <- str_match(line, "Chunk ([\\w-]+) with")
   regex_groups <- str_match(line, "UTILITY: ([E\\d\\.-]+)")
-
+  
   # If it's a line regarding retrieved memory
   if (!is.na(matched_memory[1])) {
     retrieved_chunk <- matched_memory[2]
@@ -90,18 +90,16 @@ for (i in seq_len(n)) {
         value = list(participant, curr_block, is_tut))
   }
   else
-  # If it's a line regarding utility
-  if (!is.na(regex_groups[1])) {
-    utility <- as.numeric(regex_groups[2])
-    # time <- as.numeric(regex_groups[3])
-
-    # add entry
-    idx_util <- idx_util + 1L
-    set(utilities_attend,
-        idx_util,
-        j = 1:3,
-        value = list(participant, time, utility))
-  }
+    # If it's a line regarding utility
+    if (!is.na(regex_groups[1])) {
+      utility <- as.numeric(regex_groups[2])
+      # add entry
+      idx_util <- idx_util + 1L
+      set(utilities_attend,
+          idx_util,
+          j = 1:3,
+          value = list(participant, time, utility))
+    }
 }
 
 # remove unused rows
@@ -121,7 +119,7 @@ ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
   # coord_cartesian(xlim = c(0, 500)) +
   geom_hline(yintercept = 0, linetype = "dotted", col = "red") +
   geom_ribbon(aes(ymin = -0.1,
-                ymax = 0.1), colour = NA, fill = "red", alpha = 0.1) +
+                  ymax = 0.1), colour = NA, fill = "red", alpha = 0.1) +
   theme_light()
 
 
@@ -130,13 +128,13 @@ ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
 tuts_by_block <- aggregate(memories_matched$is_tut,
                            list(memories_matched$block),
                            sum) %>%
-                 add_column(aggregate(memories_matched$is_tut,
-                            list(memories_matched$block),
-                            length)[2]) %>%
-                 rename(block = 1,
-                        tut_sum = 2,
-                        n = 3)
-                        
+  add_column(aggregate(memories_matched$is_tut,
+                       list(memories_matched$block),
+                       length)[2]) %>%
+  rename(block = 1,
+         tut_sum = 2,
+         n = 3)
+
 
 ggplot(tuts_by_block, aes(x = block, y = (tut_sum / n))) +
   geom_line() +
@@ -148,17 +146,17 @@ ggplot(tuts_by_block, aes(x = block, y = (tut_sum / n))) +
 
 
 #t.test function
-t.test2 <- function(m1, m2, s1, s2, n1, n2, m0=0, equal.variance=FALSE) {
+t.test2 <- function(m1, m2, s1, s2, n1, n2, m0=0, equal.variance = FALSE) {
   if (equal.variance == FALSE) {
     se <- sqrt((s1^2 / n1) + (s2^2 / n2))
     # welch-satterthwaite df
     df <- ((s1^2 / n1 + s2^2 / n2)^2) /
-          ((s1^2 / n1)^2 / (n1 - 1) + (s2^2 / n2)^2 / (n2 - 1))
+      ((s1^2 / n1)^2 / (n1 - 1) + (s2^2 / n2)^2 / (n2 - 1))
   } else {
     # pooled standard deviation, scaled by the sample sizes
     se <- sqrt((1 / n1 + 1 / n2) *
-               ((n1 - 1) * s1^2 + (n2 - 1) * s2^2) /
-               n1 + n2 - 2)
+                 ((n1 - 1) * s1^2 + (n2 - 1) * s2^2) /
+                 n1 + n2 - 2)
     df <- n1 + n2 - 2
   }
   t <- (m1 - m2 - m0) / se 
@@ -175,59 +173,62 @@ rt_by_part <- setNames(aggregate(as.numeric(behdat_non_nil$rt),
                                  mean),
                        c("Participant", "meanRT"))
 
-m1 <- mean(rt_by_part$meanRT)
-m2 <- 0.3398
+rt_m1 <- mean(rt_by_part$meanRT)
+rt_m2 <- 0.3398
 
-s1 <- sd(as.numeric(rt_by_part$meanRT))
-s2 <- 0.0737
+rt_s1 <- sd(as.numeric(rt_by_part$meanRT))
+rt_s2 <- 0.0737
 
-n1 <- participant
-n2 <- 116
-t.test2(m1, m2, s1, s2, n1, n2)
+rt_n1 <- participant
+rt_n2 <- 116
+t.test2(rt_m1, rt_m2, rt_s1, rt_s2, rt_n1, rt_n2)
 
 # plot RT CV
-# TODO: Add error bars
 
 mean_rt <- mean(as.numeric(behdat_non_nil$rt))
 
-data_rt <- data.frame(type = c("data", "model"), rt = c(0.3398, mean(rt_by_part$meanRT)))
+data_rt <- data.frame(type = c("data", "model"),
+                      RT = c(0.3398, mean(rt_by_part$meanRT)),
+                      SD = c(rt_s2, rt_s1))
 
-ggplot(data_rt, aes(y = rt, x = type, fill = type, ylab = "RT")) +
+ggplot(data_rt, aes(y = RT, x = type, fill = type, ylab = "RT")) +
   geom_bar(position = "dodge", stat = "identity") +
   ylab("RT") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  geom_errorbar(aes(ymin = RT-SD, ymax = RT+SD), width = 0.2)
 
 
 #t test on SART Accuracy by mean and sd
 
 acc_by_part <- behdat %>%
-                  subset((response == "f" & stimulus == "O") |
-                         (response == "NIL" & stimulus == "Q"))
+  subset((response == "f" & stimulus == "O") |
+           (response == "NIL" & stimulus == "Q"))
 
 acc_by_part <- setNames(aggregate(acc_by_part$response,
-                            list(acc_by_part$participant),
-                            length), c("Participant", "accuracy"))
-                            
+                                  list(acc_by_part$participant),
+                                  length), c("Participant", "accuracy"))
+
 acc_by_part$accuracy <- acc_by_part$accuracy / (nrow(behdat) / 4)
 
-m1 <- mean(acc_by_part$accuracy)
-m2 <- 0.9426
+sa_m1 <- mean(acc_by_part$accuracy)
+sa_m2 <- 0.9426
 
-s1 <- sd(as.numeric(acc_by_part$accuracy))
-s2 <- 0.06
+sa_s1 <- sd(as.numeric(acc_by_part$accuracy))
+sa_s2 <- 0.06
 
-n1 <- participant
-n2 <- 116
+sa_n1 <- participant
+sa_n2 <- 116
 
-t.test2(m1, m2, s1, s2, n1, n2)
+t.test2(sa_m1, sa_m2, sa_s1, sa_s2, sa_n1, sa_n2)
 
 
 # plot SART accuracy
-# TODO: Add error bars
 
 data_errors <- data.frame(type = c("data", "model"),
-                          SE = c(0.9426, mean(acc_by_part$accuracy)))
+                          SE = c(0.9426, mean(acc_by_part$accuracy)),
+                          SD = c(sa_s2, sa_s1))
 
 ggplot(data_errors, aes(y = SE, x = type, fill = type)) +
   geom_bar(position = "dodge", stat = "identity") + ylab("SART Accuracy") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  geom_errorbar(aes(ymin = SE - SD, ymax = SE+SD), width = 0.2)
