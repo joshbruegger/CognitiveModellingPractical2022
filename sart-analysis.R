@@ -47,7 +47,8 @@ utilities_attend <- data.table(participant = rep(0L, n),
 
 memories_matched <- data.table(participant = rep(0L, n),
                                block = rep(0L, n),
-                               is_tut = rep(0, n))
+                               is_tut = rep(0L, n),
+                               time = rep(0, n))
 
 idx_util <- 0L
 idx_mem <- 0L
@@ -60,18 +61,18 @@ for (i in seq_len(n)) {
     participant <- participant + 1L
     print(participant)
   }
-  
+
   # Update time
   new_time <- as.numeric(str_match(line, "  ([\\d.]+)   ")[2])
   if (!is.na(new_time)) {
     time <- new_time
     curr_block <- ceiling(time / time_per_block)
   }
-  
-  
+
+
   matched_memory <- str_match(line, "Chunk ([\\w-]+) with")
   regex_groups <- str_match(line, "UTILITY: ([E\\d\\.-]+)")
-  
+
   # If it's a line regarding retrieved memory
   if (!is.na(matched_memory[1])) {
     retrieved_chunk <- matched_memory[2]
@@ -86,8 +87,8 @@ for (i in seq_len(n)) {
     idx_mem <- idx_mem + 1L
     set(memories_matched,
         idx_mem,
-        j = 1:3,
-        value = list(participant, curr_block, is_tut))
+        j = 1:4,
+        value = list(participant, curr_block, is_tut, time))
   }
   else
     # If it's a line regarding utility
@@ -109,7 +110,7 @@ utilities_attend <- subset(utilities_attend, participant != 0)
 
 # plot utility
 
-utilities_part1 <- subset(utilities_attend, participant == 1)
+utilities_part1 <- subset(utilities_attend, participant == 2)
 utility_time <- setNames(aggregate(utilities_part1$utility,
                                    list(utilities_part1$time),
                                    mean), c("Time", "Utility"))
@@ -121,6 +122,10 @@ ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
   geom_ribbon(aes(ymin = -0.1,
                   ymax = 0.1), colour = NA, fill = "red", alpha = 0.1) +
   theme_light()
+
+# Cumulative plot of tuts over time
+memories_part1 <- subset(memories_matched, participant == 1)
+ggplot(memories_part1, aes(x=time, y=cumsum(is_tut))) + geom_line()
 
 
 # plot MW proportion per block

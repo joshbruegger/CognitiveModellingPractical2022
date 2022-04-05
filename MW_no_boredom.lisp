@@ -1,5 +1,3 @@
-;; Group 06
-
 ;;  Sustained Attention to Response Task (SART)
 ;;
 ;;  In each trial the participant sees a letter: "O" or "Q".
@@ -16,10 +14,10 @@
 
 
 ;; Experiment settings
-(defvar *stimulus-duration* 0.3) ; number of seconds the stimulus is shown
-(defvar *inter-stimulus-interval* 0.9) ; number of seconds between trials
-(defvar *target-trials* 1600) ; number of target trials
-(defvar *non-target-trials* 200) ; number of non-target trials
+(defvar *stimulus-duration* 2) ; number of seconds the stimulus is shown
+(defvar *inter-stimulus-interval* 0.5) ; number of seconds between trials
+(defvar *target-trials* 180) ; number of target trials
+(defvar *non-target-trials* 20) ; number of non-target trials
 
 (defvar *output-directory* "~/output/") ; location where output files are stored
 (defvar *trace-to-file-only* nil) ; whether the model trace should only be saved to file and not appear in terminal
@@ -192,72 +190,7 @@
 
 (clear-all)
 
-(defvar matchingReward)
-(defvar trialEndReward)
-(defvar checkGoalReward)
-(defvar snapBackRewardValue)
-(defvar decreasingFactor)
-
-;; Custom reward only for attend
-(defun give-reward (reward)
-  (let ((newReward (+ reward (car (car (spp attend :u)))))
-        (command "(spp attend :u ")
-  )
-
-  (setq command (concatenate 'string command (format nil "~A" newReward)))
-  (setq command (concatenate 'string command ")"))
-  (eval (read-from-string command))
-
-  (format t "REWARD GIVEN: ~a, NEW UTILITY: ~a~%" reward (car(car(spp attend :u))))
-  
-  )
-)
-
-;; reward hook for giving custom rewards
-(defun reward-hook-fun (id)
-
-  (cond ( (string-equal (evt-details id) "PRODUCTION-FIRED CHECK-CURRENT-GOAL")
-          (format t "GIVING REWARD FOR CHECK-CURRENT-GOAL~%")
-          (give-reward checkGoalReward)
-        )
-        ( (string-equal (evt-details id) "PRODUCTION-FIRED RETRIEVE-RESPONSE")
-          (format t "GIVING REWARD FOR RETRIEVE-RESPONSE~%")
-          (give-reward matchingReward)
-        )
-        ( (string-equal (evt-details id) "PRODUCTION-FIRED PREPARE-FOR-NEXT")
-          (format t "GIVING REWARD FOR PREPARE-FOR-NEXT~%")
-          (give-reward trialEndReward) 
-        )
-        ( (string-equal (evt-details id) "PRODUCTION-FIRED REMEMBER-TO-ATTEND")
-          (format t "GIVING REWARD FOR REMEMBER-T0-ATTEND~%")
-          (give-reward (snapBackReward))
-        )
-        ( (string-equal (evt-details id) "PRODUCTION-FIRED RETRIEVE-MEMORY")
-          (format t "MIND WANDERING! UTILITY: ~a" (car(car(spp attend :u))))
-        )
-  ) 
-)
-
-(add-post-event-hook 'reward-hook-fun)
-
-
-(defun snapBackReward ()
-  (setq snapBackRewardValue (- snapBackRewardValue decreasingFactor))
-  (cond ((< snapBackRewardValue 0.5)
-   0.5)
-   (t snapBackRewardValue))
-)
-
-(defun reset-custom-parameters ()
-  (setq matchingReward 0.2)
-  (setq trialEndReward -0.2)
-  (setq checkGoalReward -0.0005)
-  (setq snapBackRewardValue 10)
-  (setq decreasingFactor 2)
-)
-
 (define-model sart
-(reset-custom-parameters)
 
 ;; Model parameters
 (sgp :v t ; main trace detail
@@ -269,11 +202,6 @@
   :rt -5 ; retrieval threshold
   :bll 0.5 ; base-level learning
   :ans 0.2 ;activation noise
-  :epl t ; enable prouction-compilation
-  :pct t ; production compilation trace
-  :ul t ; Utility learning required for production comp
-  :ult t ; utility learning trace flag
-  :egs 0.01 ; Utiliy noise
 )
 
 (chunk-type beginning label)
@@ -286,13 +214,12 @@
   (start isa chunk)
   (press-on-O isa srmapping stimulus "O" hand left)
   (withhold-on-Q isa srmapping stimulus "Q" hand nil)
+  (startgoal isa beginning label start)
   (attend isa goal state attend)
   (wander isa goal state wander)
   (identify isa subgoal step identify)
   (get-response isa subgoal step get-response)
   (make-response isa subgoal step make-response)
-  (prepare-for-next isa subgoal step prepare-for-next)
-  
 
   ;; Memories
   (memory1 isa memory content "cute cat")
@@ -310,57 +237,24 @@
   (memory13 isa memory content "cute boy")
   (memory14 isa memory content "crush")
   (memory15 isa memory content "assignments")
-  (memory16 isa memory content "did I turn off the stove?")
+  (memory16 isa memory content "did you turn off the stove?")
   (memory17 isa memory content "call your mom")
   (memory18 isa memory content "what was the name of that one song")
   (memory19 isa memory content "never gonna give you up")
   (memory20 isa memory content "I want pizza")
   (memory21 isa memory content "Simon the cat video")
-  (memory22 isa memory content "Stephen Jones' brilliant accent")
+  (memory22 isa memory content "Chocolate")
   (memory23 isa memory content "Can you breathe on mars")
   (memory24 isa memory content "Cognitive modelling practical assignment")
-  (memory25 isa memory content "TAs you're great pls give us good grade")
-  (memory26 isa memory content "if im 70kg and I eat 10kg of pizza, am I 8% pizza")
-  (memory27 isa memory content "what will I have for dinner?")
-  (memory28 isa memory content "how does ACT-R work?")
-  (memory29 isa memory content "Ice cream")
-  (memory30 isa memory content "Do astronauts eat ice cream?")
-  (memory31 isa memory content "catchy k-pop song")
-  (memory32 isa memory content "baby shark")
-  (memory33 isa memory content "awful but catchy song")
-  (memory34 isa memory content "we don't talk about bruno")
-  (memory35 isa memory content "To be or not to be?")
-  (memory36 isa memory content "Idea for the next big social media")
-  (memory37 isa memory content "where did Vine go?")
-  (memory38 isa memory content "Dad, I'm a material girl")
-  (memory39 isa memory content "tiktok needs to be stopped")
-  (memory40 isa memory content "What is the meaning of life?")
-  (memory41 isa memory content "what does it mean for the meaning of life to be 42?")
-  (memory42 isa memory content "I-I'll follow, I'll follow you. Deep sea baby")
-  (memory43 isa memory content "it's sunny lets go to noordenplantsoen")
-  (memory44 isa memory content "UGh, so many memories")
-  (memory45 isa memory content "Party in Mexico")
-  (memory46 isa memory content "My first kiss in Mexico")
-  (memory47 isa memory content "Who is Berlin Manson")
-  (memory48 isa memory content "I'm thirsty")
-  (memory49 isa memory content "I need to water my plants")
-  (memory50 isa memory content "I want chocolate")
-  (memory51 isa memory content "Climate change anxiety")
-  (memory52 isa memory content "Complain about geopolitics")
-  (memory53 isa memory content "I need to mine diamonds in minecraft")
-  (memory54 isa memory content "I'm hungry")
-  (memory55 isa memory content "Sudden urge to move to a hut in the woods")
-  (memory56 isa memory content "Yo-mama joke")
-  (memory57 isa memory content "Comeback to a conversation you had 3 days ago")
-  (memory58 isa memory content "I should buy a skirt")
-  (memory59 isa memory content "How to please the Overlord")
-  (memory60 isa memory content "What will I have for dinner?")
-  (memory61 isa memory content "I⎓ ||𝙹⚍'∷ᒷ ∷ᒷᔑ↸╎リ⊣ ℸ ̣ ⍑╎ᓭ, ⊣╎⍊ᒷ ⚍ᓭ ᔑ ʖ𝙹リ⚍ᓭ !¡𝙹╎リℸ ̣")
-
-  (remember-to-attend isa memory content "I should attend")
+  (memory25 isa memory content "future final")
+  (memory26 isa memory content "if im 70kg and I eat 10kg of pizza, am I 15% pizza")
+  (memory27 isa memory content "what will I have for diner?")
+  (remember-to-attend isa memory content "remember to attend")
 )
 
 (set-base-levels
+  (attend      10000  -10000)
+  (wander      10000  -10000)
   (press-on-O    10000  -10000)
   (withhold-on-Q  10000  -10000)
 
@@ -369,81 +263,59 @@
   (memory4  200 -10000) (memory5  200 -10000)
   (memory6  200 -10000) (memory7  200 -10000)
   (memory8  200 -10000) (memory9  200 -10000)
-
   (memory10 200 -10000) (memory11 200 -10000)
   (memory12 200 -10000) (memory13 200 -10000)
   (memory14 200 -10000) (memory15 200 -10000)
   (memory16 200 -10000) (memory17 200 -10000)
   (memory18 200 -10000) (memory19 200 -10000)
-
   (memory20 200 -10000) (memory21 200 -10000)
   (memory22 200 -10000) (memory23 200 -10000)
   (memory24 200 -10000) (memory25 200 -10000)
   (memory26 200 -10000) (memory27 200 -10000)
-  (memory28 200 -10000) (memory29 200 -10000)
-
-  (memory30 200 -10000) (memory31 200 -10000)
-  (memory32 200 -10000) (memory33 200 -10000)
-  (memory34 200 -10000) (memory35 200 -10000)
-  (memory36 200 -10000) (memory37 200 -10000)
-  (memory38 200 -10000) (memory39 200 -10000)
-
-  (memory40 200 -10000) (memory41 200 -10000)
-  (memory42 200 -10000) (memory43 200 -10000)
-  (memory44 200 -10000) (memory45 200 -10000)
-  (memory46 200 -10000) (memory47 200 -10000)
-  (memory48 200 -10000) (memory49 200 -10000)
-
-  (memory50 200 -10000) (memory51 200 -10000)
-  (memory52 200 -10000) (memory53 200 -10000)
-  (memory54 200 -10000) (memory55 200 -10000)
-  (memory56 200 -10000) (memory57 200 -10000)
-  (memory58 200 -10000) (memory59 200 -10000)
-  (memory60 200 -10000) (memory61 200 -10000)
 )
 
-(p attend
-  ?goal>
-    buffer    empty
-==>
-  +goal>
-    isa       goal
-    state     attend
-)
-(spp attend :u 10)
-
-(p wander
-  ?goal>
-    buffer              empty
+(p start-task
+  "Performs a retrieval request to set the goal "
+  =goal>
+    isa      beginning
+    label    start
+  ?retrieval>
+    buffer   empty
+    state    free
+  - state    error
 ==>
   +retrieval>
-    isa                 memory
-  - content             nil
-  - content             "I should attend"
-    :recently-retrieved nil
-  -imaginal>
-  +goal>
-    isa                 goal
-    state               wander
+    isa      goal
+    state    attend
+  -goal>
 )
-(spp wander :u 0)
 
 (p check-current-goal
-  =goal>
+  =retrieval>
     isa           goal
     state         attend
-  ?visual-location>
+  ?retrieval>
+    state         free
+  - state         error
+  ?goal>
     buffer        empty
   ?visual>
   - scene-change  T
 ==>
-  -goal>
+  =retrieval>
+    state         nil ; clear retrieval buffer without strengthening chunk
+  -retrieval>
+  +retrieval>
+    isa           goal
+  - state         nil
 )
 
 (p identify-stimulus
-  =goal>
-    isa       goal
-    state     attend
+  ?goal>
+    buffer      empty
+  =retrieval>
+    isa         goal
+    state       attend
   =visual-location>
   ?visual>
     state       free
@@ -454,6 +326,9 @@
   +goal>
     isa         subgoal
     step        get-response
+  =retrieval>
+    state       nil ; clear retrieval buffer without strengthening chunk
+  -retrieval>
 )
 
 (p retrieve-response
@@ -465,6 +340,8 @@
     value     =letter
   ?visual>
     state     free
+  ?retrieval>
+    state     free
 ==>
   +retrieval>
     isa       srmapping
@@ -475,14 +352,14 @@
   +visual>
     isa       clear-scene-change
 )
-(spp retrieve-response :u 0.3)
 
-(p respond-if-target
+(p respond-if-O
   =goal>
     isa       subgoal
     step      make-response
   =retrieval>
     isa       srmapping
+  - stimulus  nil
     hand      =hand
   ?manual>
     state     free
@@ -491,38 +368,52 @@
     isa       punch
     hand      =hand
     finger    index
-  =goal>
-    isa       subgoal
-    step      prepare-for-next
-
+  -goal>
+  -visual-location>
+  -visual>
+  +retrieval>
+    isa       goal
+  - state     nil
 )
 
-(p refrain-if-non-target
+(p dont-respond-if-Q
   =goal>
     isa       subgoal
     step      make-response
   =retrieval>
     isa       srmapping
     hand      nil
+  - stimulus  nil
   ?manual>
     state     free
-==>
-  =goal>
-    isa       subgoal
-    step      prepare-for-next
-)
-
-(p prepare-for-next
-  =goal>
-    isa       subgoal
-    step      prepare-for-next
 ==>
   -goal>
   -visual-location>
   -visual>
+  +retrieval>
+    isa       goal
+  - state     nil
 )
 
-(spp prepare-for-next :reward t)
+(p start-wandering
+  ?goal>
+    buffer              empty
+  =retrieval>
+    isa                 goal
+    state               wander
+==>
+  =retrieval>
+    state       nil ; clear retrieval buffer without strengthening chunk
+  +retrieval>
+    isa                 memory
+  - content             nil
+  - content             "remember-to-attend"
+    :recently-retrieved nil
+  -imaginal>
+  +goal>
+    isa                 goal
+    state               wander
+)
 
 (p retrieve-memory
   =goal>
@@ -535,13 +426,14 @@
     isa                 memory
   - content             nil
     :recently-retrieved nil
+  -imaginal>
 )
 
 (p attend-memory
   =goal>
     state               wander
   =retrieval>
-  - content             "I should attend"
+  - content             "remember-to-attend"
     content             =memory
   ?imaginal>
     state               free
@@ -550,11 +442,11 @@
     isa                 memory
     content             =memory
   =retrieval>
-    content             nil
+    state               nil
   -retrieval>
 )
 
-(p respond-default
+(p respond-standard
   =goal>
     state               wander
   =visual-location>
@@ -570,23 +462,26 @@
     finger    index
   -visual-location>
 )
-(spp respond-default :u 1)
+(spp respond-standard :u 0.5)
 
 (p remember-to-attend
   =goal>
     state               wander
   =retrieval>
     isa                 memory
-    content             "I should attend"
-  =imaginal>
+    content             "remember-to-attend"
   ==>
-  ;; =retrieval>
-  ;;   content             nil
-  -retrieval>
-  =imaginal>
+  =retrieval>
+    state               attend
     content             nil
-  -imaginal>
+  -retrieval>
+  +retrieval>
+    isa                 goal
+    state               attend
   -goal>
+  -imaginal>
 )
+
+(goal-focus startgoal)
 
 )
