@@ -110,14 +110,14 @@ utilities_attend <- subset(utilities_attend, participant != 0)
 
 # plot utility
 
-utilities_part1 <- subset(utilities_attend, participant == 2)
+utilities_part1 <- subset(utilities_attend, participant == 1)
 utility_time <- setNames(aggregate(utilities_part1$utility,
                                    list(utilities_part1$time),
                                    mean), c("Time", "Utility"))
 utility_time <- utility_time[-1, ]
 
 ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
-  # coord_cartesian(xlim = c(0, 500)) +
+  # coord_cartesian(xlim = c(1620, 2160)) +
   geom_hline(yintercept = 0, linetype = "dotted", col = "red") +
   geom_ribbon(aes(ymin = -0.1,
                   ymax = 0.1), colour = NA, fill = "red", alpha = 0.1) +
@@ -125,7 +125,7 @@ ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
 
 # Cumulative plot of tuts over time
 memories_part1 <- subset(memories_matched, participant == 1)
-ggplot(memories_part1, aes(x=time, y=cumsum(is_tut))) + geom_line()
+ggplot(memories_part1, aes(x=time, y=cumsum(is_tut)/cumsum(is_tut != 2))) + geom_line()
 
 
 # plot MW proportion per block
@@ -138,16 +138,25 @@ tuts_by_block <- aggregate(memories_matched$is_tut,
                        length)[2]) %>%
   rename(block = 1,
          tut_sum = 2,
-         n = 3)
+         tot = 3)
 
 
-ggplot(tuts_by_block, aes(x = block, y = (tut_sum / n))) +
+ggplot(tuts_by_block, aes(x = block, y = (tut_sum / tot))) +
   geom_line() +
   geom_point() +
-  ylab("MW Proportion") +
+  ylab("Proportion of Task Unrelated Thoughts (TUTs)") +
   xlab("Block Number") +
-  coord_cartesian(ylim = c(0, 1)) +
-  theme_light()
+  coord_cartesian(ylim = c(0, 0.8)) +
+  scale_y_continuous(breaks = seq(0, 0.8, by = 0.1), expand = c(0, 0)) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x=element_text(size=12),
+        axis.text.y=element_text(size=12),
+        axis.title.y=element_text(size=14, face="bold"),
+        axis.title.x=element_text(size=14, face="bold")) +
+  geom_errorbar(aes(ymin=(tut_sum/tot)-sd, ymax=(tut_sum/tot)+sd), width=.2,
+                position=position_dodge(0.05))
 
 
 #t.test function
@@ -237,3 +246,11 @@ ggplot(data_errors, aes(y = SE, x = type, fill = type)) +
   geom_bar(position = "dodge", stat = "identity") + ylab("SART Accuracy") +
   theme(legend.position = "none") + 
   geom_errorbar(aes(ymin = SE - SD, ymax = SE+SD), width = 0.2)
+
+# RTCV
+
+ggplot(data_rt, aes(y = RT/SD, x = type, fill = type)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  ylab("RTCV") +
+  theme(legend.position = "none") +
+  geom_errorbar(aes(ymin = RT/SD-SD, ymax = RT/SD+SD), width = 0.2)

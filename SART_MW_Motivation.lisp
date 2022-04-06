@@ -197,6 +197,7 @@
 (defvar checkGoalReward)
 (defvar snapBackRewardValue)
 (defvar decreasingFactor)
+(defvar snapBackCount)
 
 ;; Custom reward only for attend
 (defun give-reward (reward)
@@ -242,18 +243,22 @@
 
 
 (defun snapBackReward ()
-  (setq snapBackRewardValue (- snapBackRewardValue decreasingFactor))
+  (setq snapBackRewardValue (- snapBackRewardValue (expt 2 (- 0 (* snapBackCount decreasingFactor)))))
+  (setq snapBackCount (+ snapBackCount 1))
   (cond ((< snapBackRewardValue 0.5)
    0.5)
    (t snapBackRewardValue))
 )
 
 (defun reset-custom-parameters ()
-  (setq matchingReward 0.2)
-  (setq trialEndReward -0.2)
+  (setq matchingReward 0.1)
+  (setq trialEndReward -0.1)
   (setq checkGoalReward -0.0005)
-  (setq snapBackRewardValue 10)
-  (setq decreasingFactor 2)
+  (setq snapBackRewardValue 7)
+  (setq decreasingFactor 0.3)
+  (setq snapBackCount 0)
+
+  (setq snapBackRewardValue (+ snapBackRewardValue decreasingFactor))
 )
 
 (define-model sart
@@ -270,9 +275,9 @@
   :bll 0.5 ; base-level learning
   :ans 0.2 ;activation noise
   :epl t ; enable prouction-compilation
-  :pct t ; production compilation trace
+  :pct nil ; production compilation trace
   :ul t ; Utility learning required for production comp
-  :ult t ; utility learning trace flag
+  :ult nil ; utility learning trace
   :egs 0.01 ; Utiliy noise
 )
 
@@ -410,7 +415,7 @@
     isa       goal
     state     attend
 )
-(spp attend :u 10)
+(spp attend :u 8)
 
 (p wander
   ?goal>
