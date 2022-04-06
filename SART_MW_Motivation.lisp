@@ -254,7 +254,7 @@
   (setq matchingReward 0.1)
   (setq trialEndReward -0.1)
   (setq checkGoalReward -0.0005)
-  (setq snapBackRewardValue 7)
+  (setq snapBackRewardValue 6.4)
   (setq decreasingFactor 0.3)
   (setq snapBackCount 0)
 
@@ -415,7 +415,7 @@
     isa       goal
     state     attend
 )
-(spp attend :u 8)
+(spp attend :u 6.85)
 
 (p wander
   ?goal>
@@ -480,7 +480,7 @@
   +visual>
     isa       clear-scene-change
 )
-(spp retrieve-response :u 0.3)
+(spp retrieve-response :u 0.2)
 
 (p respond-if-target
   =goal>

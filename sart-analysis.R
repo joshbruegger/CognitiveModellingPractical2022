@@ -25,6 +25,7 @@ for (i in seq_len(length(behfiles))) {
 # Required packages
 require(tidyverse)
 require(data.table)
+require(plotrix)
 
 # Read the trace file into memory
 trace <- file(paste0(data_path, "sart-trace.txt"), "r")
@@ -131,33 +132,42 @@ ggplot(memories_part1, aes(x=time, y=cumsum(is_tut)/cumsum(is_tut != 2))) + geom
 # plot MW proportion per block
 
 tuts_by_block <- aggregate(memories_matched$is_tut,
-                           list(memories_matched$block),
+                           list(memories_matched$block,memories_matched$participant),
                            sum) %>%
   add_column(aggregate(memories_matched$is_tut,
-                       list(memories_matched$block),
-                       length)[2]) %>%
+                       list(memories_matched$block, memories_matched$participant),
+                       length)[3]) %>%
   rename(block = 1,
-         tut_sum = 2,
-         tot = 3)
+         participant = 2,
+         tut_sum = 3,
+         tot = 4)%>%
+  group_by(block) %>% 
+  summarise(mean_proportion = mean(tut_sum/tot),se = std.error(tut_sum/tot))
+
+  tuts_by_block$behav_dat = c(0.3518, 0.5444, 0.6303, 0.6865)
+  tuts_by_block$behav_se = c(0.01318, 0.01662, 0.01662, 0.01662)
 
 
-ggplot(tuts_by_block, aes(x = block, y = (tut_sum / tot))) +
-  geom_line() +
+
+ggplot(tuts_by_block, aes(x = block, y = mean_proportion)) +
+  geom_line(size = 0.8) +
   geom_point() +
   ylab("Proportion of Task Unrelated Thoughts (TUTs)") +
   xlab("Block Number") +
   coord_cartesian(ylim = c(0, 0.8)) +
   scale_y_continuous(breaks = seq(0, 0.8, by = 0.1), expand = c(0, 0)) +
   theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text.x=element_text(size=12),
+  theme(axis.text.x=element_text(size=12),
         axis.text.y=element_text(size=12),
         axis.title.y=element_text(size=14, face="bold"),
         axis.title.x=element_text(size=14, face="bold")) +
-  geom_errorbar(aes(ymin=(tut_sum/tot)-sd, ymax=(tut_sum/tot)+sd), width=.2,
-                position=position_dodge(0.05))
+  geom_errorbar(aes(ymin = mean_proportion-se, ymax = mean_proportion+se), width = 0.03) +
+  geom_line(aes(y=behav_dat), col = "#e8505b", size=0.8) +
+  geom_point(aes(y=behav_dat), col = "#e8505b") +
+  geom_errorbar(aes(ymin = behav_dat-behav_se, ymax = behav_dat+behav_se), width = 0.03)
 
+RMSD <- sqrt(mean((tuts_by_block$behav_dat - tuts_by_block$mean_proportion)^2))
+RMSD
 
 #t.test function
 t.test2 <- function(m1, m2, s1, s2, n1, n2, m0=0, equal.variance = FALSE) {
@@ -201,9 +211,9 @@ t.test2(rt_m1, rt_m2, rt_s1, rt_s2, rt_n1, rt_n2)
 
 mean_rt <- mean(as.numeric(behdat_non_nil$rt))
 
-data_rt <- data.frame(type = c("data", "model"),
-                      RT = c(0.3398, mean(rt_by_part$meanRT)),
-                      SD = c(rt_s2, rt_s1))
+data_rt <- data.frame(type = c("data", "Model", "VanVugt"),
+                      RT = c(0.3398, mean(rt_by_part$meanRT), 0.26242),
+                      SD = c(rt_s2, rt_s1, 0.08715))
 
 ggplot(data_rt, aes(y = RT, x = type, fill = type, ylab = "RT")) +
   geom_bar(position = "dodge", stat = "identity") +
@@ -238,9 +248,9 @@ t.test2(sa_m1, sa_m2, sa_s1, sa_s2, sa_n1, sa_n2)
 
 # plot SART accuracy
 
-data_errors <- data.frame(type = c("data", "model"),
-                          SE = c(0.9426, mean(acc_by_part$accuracy)),
-                          SD = c(sa_s2, sa_s1))
+data_errors <- data.frame(type = c("data", "Model", "VanVugt"),
+                          SE = c(0.9426, mean(acc_by_part$accuracy), 0.90525),
+                          SD = c(sa_s2, sa_s1, 0.010797))
 
 ggplot(data_errors, aes(y = SE, x = type, fill = type)) +
   geom_bar(position = "dodge", stat = "identity") + ylab("SART Accuracy") +
