@@ -62,18 +62,18 @@ for (i in seq_len(n)) {
     participant <- participant + 1L
     print(participant)
   }
-
+  
   # Update time
   new_time <- as.numeric(str_match(line, "  ([\\d.]+)   ")[2])
   if (!is.na(new_time)) {
     time <- new_time
     curr_block <- ceiling(time / time_per_block)
   }
-
-
+  
+  
   matched_memory <- str_match(line, "Chunk ([\\w-]+) with")
   regex_groups <- str_match(line, "UTILITY: ([E\\d\\.-]+)")
-
+  
   # If it's a line regarding retrieved memory
   if (!is.na(matched_memory[1])) {
     retrieved_chunk <- matched_memory[2]
@@ -84,7 +84,7 @@ for (i in seq_len(n)) {
     }
     else
       is_tut <- TRUE
-
+    
     idx_mem <- idx_mem + 1L
     set(memories_matched,
         idx_mem,
@@ -119,10 +119,16 @@ utility_time <- utility_time[-1, ]
 
 ggplot(utility_time, aes(x = Time, y = Utility)) + geom_line() +
   # coord_cartesian(xlim = c(1620, 2160)) +
-  geom_hline(yintercept = 0, linetype = "dotted", col = "red") +
+  geom_hline(color = "red", show.legend = TRUE, yintercept = 0, linetype = "dotted") +
   geom_ribbon(aes(ymin = -0.1,
-                  ymax = 0.1), colour = NA, fill = "red", alpha = 0.1) +
-  theme_light()
+                  ymax = 0.1, fill = "MW Threshold"), colour = NA, alpha = 0.2) +
+  theme_bw() +
+  xlab("Time (s)") +
+  ylab("Attend Production Utility") +
+  scale_color_manual(values = c("MW Threshold" = "red")) + 
+  theme(legend.position = c(0.93, 0.45),
+        legend.background = element_rect(fill = NA, color = NA)) +
+  labs(fill = "")
 
 # Cumulative plot of tuts over time
 memories_part1 <- subset(memories_matched, participant == 1)
@@ -144,12 +150,12 @@ tuts_by_block <- aggregate(memories_matched$is_tut,
   group_by(block) %>% 
   summarise(mean_proportion = mean(tut_sum/tot),se = std.error(tut_sum/tot))
 
-  tuts_by_block$behav_dat = c(0.3518, 0.5444, 0.6303, 0.6865)
-  tuts_by_block$behav_se = c(0.01318, 0.01662, 0.01662, 0.01662)
+tuts_by_block$behav_dat = c(0.3518, 0.5444, 0.6303, 0.6865)
+tuts_by_block$behav_se = c(0.01318, 0.01662, 0.01662, 0.01662)
 
 
 
-ggplot(tuts_by_block, aes(x = block, y = mean_proportion)) +
+ggplot(tuts_by_block, aes(x = block, y = mean_proportion, color = "Model")) +
   geom_line(size = 0.8) +
   geom_point() +
   ylab("Proportion of Task Unrelated Thoughts (TUTs)") +
@@ -162,12 +168,22 @@ ggplot(tuts_by_block, aes(x = block, y = mean_proportion)) +
         axis.title.y=element_text(size=14, face="bold"),
         axis.title.x=element_text(size=14, face="bold")) +
   geom_errorbar(aes(ymin = mean_proportion-se, ymax = mean_proportion+se), width = 0.03) +
-  geom_line(aes(y=behav_dat), col = "#e8505b", size=0.8) +
-  geom_point(aes(y=behav_dat), col = "#e8505b") +
-  geom_errorbar(aes(ymin = behav_dat-behav_se, ymax = behav_dat+behav_se), width = 0.03)
+  geom_line(aes(y=behav_dat, color = "Data"), size=0.8) +
+  geom_point(aes(y=behav_dat, color = "Data")) +
+  geom_errorbar(aes(ymin = behav_dat-behav_se, ymax = behav_dat+behav_se), width = 0.03) +
+  scale_color_manual(values = c(
+                                "Model" = "black",
+                                "Data" = "red")) +
+  theme(legend.position = c(0.93, 0.15),
+        legend.background = element_rect(fill = "white", color = "black")) +
+  labs(color = "Legend:")
 
 RMSD <- sqrt(mean((tuts_by_block$behav_dat - tuts_by_block$mean_proportion)^2))
 RMSD
+
+R2 <- 1 - sum((tuts_by_block$behav_dat - tuts_by_block$mean_proportion)^2) /
+  sum((tuts_by_block$behav_dat - mean(tuts_by_block$behav_dat))^2)
+R2
 
 #t.test function
 t.test2 <- function(m1, m2, s1, s2, n1, n2, m0=0, equal.variance = FALSE) {
@@ -209,15 +225,18 @@ t.test2(rt_m1, rt_m2, rt_s1, rt_s2, rt_n1, rt_n2)
 
 # plot RT CV
 
+vv_rt_sd <- 0.08715
+vv_rt_mean <- 0.26242
+
 mean_rt <- mean(as.numeric(behdat_non_nil$rt))
 
-data_rt <- data.frame(type = c("data", "Model", "VanVugt"),
+data_rt <- data.frame(type = c("Data", "Motivation", "NoMotivation"),
                       RT = c(0.3398, mean(rt_by_part$meanRT), 0.26242),
                       SD = c(rt_s2, rt_s1, 0.08715))
 
-ggplot(data_rt, aes(y = RT, x = type, fill = type, ylab = "RT")) +
+ggplot(data_rt, aes(y = RT, x = type, fill = type, ylab = "Reaction Time")) +
   geom_bar(position = "dodge", stat = "identity") +
-  ylab("RT") +
+  ylab("Reaction Time") + theme_bw() + xlab("") +
   theme(legend.position = "none") +
   geom_errorbar(aes(ymin = RT-SD, ymax = RT+SD), width = 0.2)
 
@@ -248,13 +267,18 @@ t.test2(sa_m1, sa_m2, sa_s1, sa_s2, sa_n1, sa_n2)
 
 # plot SART accuracy
 
-data_errors <- data.frame(type = c("data", "Model", "VanVugt"),
+vv_sa_mean <- 0.90525
+vv_sa_sd <- 0.010797
+
+data_errors <- data.frame(type = c("Data", "Motivation", "NoMotivation"),
                           SE = c(0.9426, mean(acc_by_part$accuracy), 0.90525),
                           SD = c(sa_s2, sa_s1, 0.010797))
 
 ggplot(data_errors, aes(y = SE, x = type, fill = type)) +
-  geom_bar(position = "dodge", stat = "identity") + ylab("SART Accuracy") +
-  theme(legend.position = "none") + 
+  geom_bar(position = "dodge", stat = "identity") +
+  ylab("SART Accuracy") +
+  theme_bw() + xlab("") +
+  theme(legend.position = "none") +
   geom_errorbar(aes(ymin = SE - SD, ymax = SE+SD), width = 0.2)
 
 # RTCV
@@ -263,4 +287,51 @@ ggplot(data_rt, aes(y = RT/SD, x = type, fill = type)) +
   geom_bar(position = "dodge", stat = "identity") +
   ylab("RTCV") +
   theme(legend.position = "none") +
+  theme_bw() +
   geom_errorbar(aes(ymin = RT/SD-SD, ymax = RT/SD+SD), width = 0.2)
+
+
+#rt by time
+mean_by_trial <- aggregate(as.numeric(behdat_non_nil$rt), list(behdat_non_nil$trial), mean) %>%
+  rename(trial = 1,
+         rt = 2)
+
+mean_by_trial <- mean_by_trial[-1,]
+
+ggplot(mean_by_trial, aes(x = trial*1.2, y = rt*1000)) +
+  geom_point() +
+  theme_bw() +
+  geom_smooth(method = "auto") +
+  ylab("RT (ms)") +
+  xlab("Time (s)")
+
+#Rt by block
+
+block1 <- subset(mean_by_trial, trial < 450)
+block2 <- subset(mean_by_trial, trial < 900 & trial >= 450)
+block3 <- subset(mean_by_trial, trial < 1350 & trial >= 900)
+block4 <- subset(mean_by_trial, trial < 1800 & trial >= 1350)
+mean_by_block <- data.frame(block1, block2, block3, block4)
+
+rt_m1 <- mean(rt_by_part$meanRT)
+vv_rt_mean
+
+rt_s1 <- sd(as.numeric(rt_by_part$meanRT))
+vv_rt_sd
+
+rt_n1 <- participant
+vv_rt_n2 <- 25
+t.test2(rt_m1, vv_rt_mean, rt_s1, vv_rt_sd, rt_n1, vv_rt_n2)
+
+
+sa_m1 <- mean(acc_by_part$accuracy)
+vv_sa_mean
+
+sa_s1 <- sd(as.numeric(acc_by_part$accuracy))
+vv_sa_sd
+
+sa_n1 <- participant
+vv_sa_n2 <- 25
+
+t.test2(sa_m1, vv_sa_mean, sa_s1, vv_sa_sd, sa_n1, vv_sa_n2)
+
